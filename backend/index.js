@@ -1,17 +1,32 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./src/config/db');
+require('dotenv').config();
 
-const OrderController = require('./src/controllers/OrderController');
+const createOrderController = require('./src/controllers/OrderController');
+const OrderRepository = require('./src/repositories/OrderRepository');
+const OrderService = require('./src/usecases/OrderService');
+const MailService = require('./src/services/MailService');
+const createOrderRoutes = require('./src/routes/orderRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const orderController = new OrderController();
+// Dependency Injection (DI)
+const orderRepository = new OrderRepository();
+const emailService = new MailService();  // Mail service отдельно
+const orderService = new OrderService(orderRepository); // сервис только для БД
 
-app.post('/api/save-order', orderController.save);
+// Controller принимает 2 зависимости
+const orderController = createOrderController(orderService, emailService);
 
-app.get('/', (req,res)=> res.json({ serverTime: new Date().toISOString() }));
+// Routes получают controller
+app.use('/api', createOrderRoutes(orderController));
 
-app.listen(3001, ()=> console.log('Backend запущен на http://localhost:3001'));
+// health-check endpoint
+app.get('/', (req, res) => {
+  res.json({ serverTime: new Date().toISOString(), status: "OK" });
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Backend (refactored) running on http://localhost:${PORT}`));
