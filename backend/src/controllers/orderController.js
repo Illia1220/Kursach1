@@ -4,13 +4,14 @@ module.exports = function createOrderController(orderService, emailService) {
       try {
         const data = req.body;
 
-        // Маппинг: frontend → база данных
+        // Маппинг данных, полученных от клиента
         const mapped = {
-          firstName: data.senderName,        // отправитель
-          lastName: data.receiverName,       // получатель
+          firstName: data.senderName,
+          lastName: data.receiverName,
+
           addressA: data.senderAddress,
           addressB: data.receiverAddress,
-          
+
           pointA_lat: data.pointA_lat,
           pointA_lng: data.pointA_lng,
           pointB_lat: data.pointB_lat,
@@ -24,14 +25,17 @@ module.exports = function createOrderController(orderService, emailService) {
           senderAddress: data.senderAddress,
           receiverName: data.receiverName,
           receiverAddress: data.receiverAddress,
-          comment: data.comment
+          comment: data.comment,
+
+          // НОВОЕ — маршрут для генерации PNG
+          route: data.route || null
         };
 
-        // 1) Сохраняем заказ в БД
+        // 1) Сохранение заказа в базе
         const order = await orderService.createOrder(mapped);
 
-        // 2) Отправляем письмо перевозчику
-        await emailService.sendInvoice(mapped);
+        // 2) Отправка письма перевозчику (вместе с картой, если есть маршрут)
+        await emailService.sendInvoiceToCarrier(mapped);
 
         res.json({ success: true, orderId: order.id });
 
