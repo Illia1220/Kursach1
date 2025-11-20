@@ -1,11 +1,19 @@
-const orderService = require("../services/orderService");
+const OrderService = require("../services/OrderService");
 
-exports.saveOrder = async (req, res) => {
-  try {
-    const result = await orderService.saveOrder(req.body);
-    res.json({ success: true, result });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+class OrderController {
+  constructor() {
+    this.save = this.save.bind(this);
   }
-};
+
+  async save(req, res) {
+    try {
+      const result = await OrderService.saveOrder(req.body);
+      res.json({ success: true, result });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+}
+
+module.exports = OrderController;
